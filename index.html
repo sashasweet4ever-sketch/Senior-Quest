@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Senior Quest</title>
+<style>
+  :root {
+    --bg: #12122B;
+    --surface: #1E1E42;
+    --surface-hover: #292752;
+    --border-soft: #34325C;
+    --ring-gold: #FFC857;
+    --ring-mint: #5EEAD4;
+    --ring-coral: #FF6B6B;
+    --ring-lavender: #B9A6FF;
+    --text: #F5F3FF;
+    --text-muted: #A8A4D6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+  #app {
+    width: 100%;
+    max-width: 760px;
+    background: var(--bg);
+    border-radius: 16px;
+    position: relative;
+  }
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 1.75rem;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .level-title {
+    font-size: 26px;
+    font-weight: 800;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .streak-block {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .streak {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .streak b { font-size: 16px; }
+  .streak span.label { font-size: 12px; color: var(--text-muted); }
+  #reset-btn {
+    background: transparent;
+    border: 1px solid var(--border-soft);
+    color: var(--text-muted);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .xp-bar-wrap { margin-bottom: 2rem; }
+  .xp-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .xp-track {
+    height: 10px;
+    border-radius: 999px;
+    background: var(--border-soft);
+    overflow: hidden;
+  }
+  .xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--ring-mint), var(--ring-gold));
+    border-radius: 999px;
+    transition: width 0.4s ease;
+  }
+  .node-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px;
+    margin-bottom: 1.5rem;
+  }
+  .node-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    padding: 14px 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--text);
+    text-align: center;
+  }
+  .node-card.active { background: var(--surface-hover); }
+  .ring-wrap { position: relative; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-wrap .icon { position: absolute; font-size: 20px; }
+  .node-label { font-weight: 700; font-size: 13px; }
+  .node-sub { font-size: 11px; color: var(--text-muted); }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    padding: 1.1rem 1.25rem;
+  }
+  .panel-title { font-weight: 800; font-size: 15px; margin-bottom: 12px; }
+  .task-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border-soft);
+    cursor: pointer;
+  }
+  .task-row:last-child { border-bottom: none; }
+  .checkbox {
+    width: 20px; height: 20px; border-radius: 6px;
+    border: 1.5px solid var(--border-soft);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 12px; color: #0A3D34;
+  }
+  .checkbox.done { background: var(--ring-mint); border-color: var(--ring-mint); }
+  .task-label { font-size: 13.5px; }
+  .task-label.done { color: var(--text-muted); text-decoration: line-through; }
+  .sch-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border-soft); gap: 10px;
+  }
+  .sch-row:last-child { border-bottom: none; }
+  .sch-name { font-weight: 700; font-size: 14px; }
+  .sch-meta { font-size: 12px; color: var(--text-muted); }
+  .apply-btn {
+    font-size: 12px; padding: 6px 12px; border-radius: 8px;
+    border: 1px solid var(--border-soft); background: transparent; color: var(--text);
+    cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 4px;
+  }
+  .apply-btn.applied {
+    border-color: var(--ring-gold); background: rgba(255,200,87,0.15); color: var(--ring-gold);
+    cursor: default;
+  }
+  .tip-box {
+    background: var(--surface-hover); border-radius: 12px; padding: 12px 14px;
+    margin-bottom: 14px; font-size: 13px; line-height: 1.5; color: var(--text-muted);
+  }
+  .tip-box b { color: var(--ring-lavender); }
+  .divider-block { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border-soft); }
+  .section-label { font-weight: 700; font-size: 14px; margin-bottom: 10px; color: var(--text-muted); }
+  .college-card { background: var(--surface-hover); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+  .college-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .college-name { font-weight: 700; font-size: 14px; }
+  .college-actions { display: flex; align-items: center; gap: 10px; }
+  .college-count { font-size: 11px; color: var(--text-muted); }
+  .remove-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    font-size: 11px; padding: 5px 10px; border-radius: 999px;
+    border: 1px solid var(--border-soft); background: transparent; color: var(--text-muted);
+    cursor: pointer; display: flex; align-items: center; gap: 4px;
+  }
+  .chip.done { border-color: var(--ring-mint); background: rgba(94,234,212,0.15); color: var(--ring-mint); }
+  .add-row { display: flex; gap: 8px; margin-top: 10px; }
+  .add-row input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border-soft);
+    border-radius: 8px; padding: 8px 12px; color: var(--text); font-size: 13px;
+  }
+  .add-row input:focus { outline: none; border-color: var(--ring-mint); }
+  .add-btn {
+    background: var(--ring-mint); border: none; border-radius: 8px; padding: 8px 14px;
+    color: #0A3D34; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 13px;
+  }
+  #levelup-toast {
+    position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+    background: var(--ring-gold); color: #3D2B00; padding: 10px 20px; border-radius: 999px;
+    font-weight: 800; font-size: 14px; z-index: 10; display: none; align-items: center; gap: 8px;
+    box-shadow: 0 4px 20px rgba(255,200,87,0.4);
+  }
+  #loading { text-align: center; padding: 2rem; color: var(--text-muted); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="loading">Loading your quest log…</div>
+  <div id="content" class="hidden">
+    <div id="levelup-toast">🏆 Level up! You're now level <span id="levelup-num"></span></div>
+
+    <div class="top-row">
+      <div>
+        <div class="eyebrow">Senior year quest log</div>
+        <div class="level-title">🏆 Level <span id="level-num">1</span></div>
+      </div>
+      <div class="streak-block">
+        <div class="streak">
+          🔥 <b id="streak-num">0</b><span class="label">day streak</span>
+        </div>
+        <button id="reset-btn">↺ Reset</button>
+      </div>
+    </div>
+
+    <div class="xp-bar-wrap">
+      <div class="xp-labels">
+        <span id="xp-current">0 XP</span>
+        <span id="xp-next">150 XP to level 2</span>
+      </div>
+      <div class="xp-track"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+    </div>
+
+    <div class="node-grid" id="node-grid"></div>
+    <div id="panel-container"></div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = "senior-quest-state-v1";
+const XP_PER_LEVEL = 150;
+const TASK_XP = 10;
+const SCHOLARSHIP_XP = 25;
+const CHECKLIST_XP = 8;
+
+const APPLICATION_TASKS = [
+  { id: "app1", label: "Request transcripts from your counselor" },
+  { id: "app2", label: "Draft your Common App personal statement" },
+  { id: "app3", label: "Ask two teachers for letters of recommendation" },
+  { id: "app4", label: "Write one school-specific supplemental essay" },
+  { id: "app5", label: "Confirm your test scores are sent to schools" },
+];
+const TEST_AID_TASKS = [
+  { id: "test1", label: "Submit the FAFSA" },
+  { id: "test2", label: "Register for a fall SAT/ACT retake (if needed)" },
+  { id: "test3", label: "Sign up for any AP exams" },
+  { id: "test4", label: "Compare financial aid offers when they arrive" },
+];
+const WELLNESS_TASKS = [
+  { id: "w1", label: "Take one screen-free evening this week" },
+  { id: "w2", label: "Check in with your counselor about your plan" },
+  { id: "w3", label: "Get 8 hours of sleep tonight" },
+];
+const SCHOLARSHIPS = [
+  { id: "sch1", name: "Coca-Cola Scholars Program", amount: "$20,000", deadline: "Oct 31", tag: "Merit" },
+  { id: "sch2", name: "QuestBridge National College Match", amount: "Full ride", deadline: "Sep 26", tag: "Need-based" },
+  { id: "sch3", name: "Dell Scholars Program", amount: "$20,000", deadline: "Dec 1", tag: "First-gen" },
+  { id: "sch4", name: "Society of Women Engineers Scholarship", amount: "$1,000–$15,000", deadline: "Feb 15", tag: "STEM" },
+  { id: "sch5", name: "Burger King Scholars Program", amount: "$1,000–$50,000", deadline: "Dec 13", tag: "Community" },
+  { id: "sch6", name: "Local Rotary Club Scholarship", amount: "$500–$2,500", deadline: "Varies", tag: "Local" },
+];
+const ADVICE_TIPS = [
+  "Apply to 2-3 'safety' schools you'd genuinely be happy to attend, not just ones that are easy to get into.",
+  "Ask for recommendation letters at least a month before your first deadline. Teachers get swamped in the fall.",
+  "Reuse and adapt scholarship essays. Many prompts overlap more than they first appear to.",
+  "The FAFSA opens October 1. Filing early can matter for first-come, first-served aid.",
+  "Keep a shared spreadsheet or doc with every deadline in one place so nothing hides in your inbox.",
+  "Senioritis is real. Build in one small reward for yourself after each big task you finish.",
+  "Visit or virtually tour schools before committing. A campus can feel very different in person.",
+  "It's okay to not have your whole future figured out by December. Most people don't.",
+];
+const CHECKLIST_ITEMS = [
+  { key: "transcript", label: "Transcript sent" },
+  { key: "essay", label: "Essay drafted" },
+  { key: "lor", label: "Recommendations requested" },
+  { key: "scores", label: "Test scores sent" },
+  { key: "submitted", label: "Application submitted" },
+];
+const NODE_DEFS = [
+  { key: "applications", label: "Applications", icon: "📄", color: "--ring-mint" },
+  { key: "scholarships", label: "Scholarships", icon: "💰", color: "--ring-gold" },
+  { key: "tests", label: "Tests & aid", icon: "🎓", color: "--ring-coral" },
+  { key: "wellness", label: "Wellness", icon: "✨", color: "--ring-lavender" },
+];
+
+function defaultState() {
+  return {
+    xp: 0,
+    streak: 0,
+    lastActiveDate: null,
+    tasks: {},
+    scholarships: {},
+    colleges: [
+      { id: "c1", name: "Example State University", checklist: { transcript: false, essay: false, lor: false, scores: false, submitted: false } },
+    ],
+  };
+}
+
+let state = null;
+let activeNode = "applications";
+let prevLevel = 1;
+
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+function yesterdayStr(from) {
+  const d = new Date(from);
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+function recordActivity(s) {
+  const today = todayStr();
+  if (s.lastActiveDate === today) return s;
+  const wasYesterday = s.lastActiveDate === yesterdayStr(today);
+  s.streak = wasYesterday ? s.streak + 1 : 1;
+  s.lastActiveDate = today;
+  return s;
+}
+
+async function loadState() {
+  try {
+    const result = await window.storage.get(STORAGE_KEY, false);
+    state = result && result.value ? JSON.parse(result.value) : defaultState();
+  } catch (e) {
+    state = defaultState();
+  }
+  prevLevel = Math.floor(state.xp / XP_PER_LEVEL) + 1;
+}
+
+async function saveState() {
+  try {
+    await window.storage.set(STORAGE_KEY, JSON.stringify(state), false);
+  } catch (e) {}
+}
+
+function ringSvg(pct, colorVar) {
+  const size = 56, stroke = 5;
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const offset = c - (pct / 100) * c;
+  return `<svg width="${size}" height="${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#2E2C5C" stroke-width="${stroke}" />
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(${colorVar})" stroke-width="${stroke}"
+      stroke-dasharray="${c}" stroke-dashoffset="${offset}" stroke-linecap="round"
+      style="transition: stroke-dashoffset 0.4s ease" />
+  </svg>`;
+}
+
+function render() {
+  const level = Math.floor(state.xp / XP_PER_LEVEL) + 1;
+  const xpIntoLevel = state.xp % XP_PER_LEVEL;
+  const xpPct = (xpIntoLevel / XP_PER_LEVEL) * 100;
+
+  document.getElementById("level-num").textContent = level;
+  document.getElementById("streak-num").textContent = state.streak;
+  document.getElementById("xp-current").textContent = `${xpIntoLevel} XP`;
+  document.getElementById("xp-next").textContent = `${XP_PER_LEVEL} XP to level ${level + 1}`;
+  document.getElementById("xp-fill").style.width = xpPct + "%";
+
+  if (level > prevLevel) {
+    const toast = document.getElementById("levelup-toast");
+    document.getElementById("levelup-num").textContent = level;
+    toast.style.display = "flex";
+    setTimeout(() => { toast.style.display = "none"; }, 2600);
+  }
+  prevLevel = level;
+
+  const appDone = APPLICATION_TASKS.filter(t => state.tasks[t.id]).length;
+  const testDone = TEST_AID_TASKS.filter(t => state.tasks[t.id]).length;
+  const wellDone = WELLNESS_TASKS.filter(t => state.tasks[t.id]).length;
+  const schDone = Object.values(state.scholarships).filter(Boolean).length;
+
+  const nodeStats = {
+    applications: { pct: Math.round((appDone / APPLICATION_TASKS.length) * 100), sub: `${appDone}/${APPLICATION_TASKS.length}` },
+    scholarships: { pct: Math.round((schDone / SCHOLARSHIPS.length) * 100), sub: `${schDone}/${SCHOLARSHIPS.length}` },
+    tests: { pct: Math.round((testDone / TEST_AID_TASKS.length) * 100), sub: `${testDone}/${TEST_AID_TASKS.length}` },
+    wellness: { pct: Math.round((wellDone / WELLNESS_TASKS.length) * 100), sub: `${wellDone}/${WELLNESS_TASKS.length}` },
+  };
+
+  const grid = document.getElementById("node-grid");
+  grid.innerHTML = NODE_DEFS.map(n => {
+    const stat = nodeStats[n.key];
+    const active = activeNode === n.key;
+    return `<div class="node-card ${active ? "active" : ""}" data-node="${n.key}" style="${active ? `border-color: var(${n.color})` : ""}">
+      <div class="ring-wrap">${ringSvg(stat.pct, n.color)}<span class="icon">${n.icon}</span></div>
+      <div class="node-label">${n.label}</div>
+      <div class="node-sub">${stat.sub} done</div>
+    </div>`;
+  }).join("");
+
+  grid.querySelectorAll(".node-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const key = card.dataset.node;
+      activeNode = activeNode === key ? null : key;
+      render();
+    });
+  });
+
+  renderPanel();
+}
+
+function taskRowHtml(task, done) {
+  return `<div class="task-row" data-task="${task.id}">
+    <div class="checkbox ${done ? "done" : ""}">${done ? "✓" : ""}</div>
+    <div class="task-label ${done ? "done" : ""}">${task.label}</div>
+  </div>`;
+}
+
+function renderPanel() {
+  const container = document.getElementById("panel-container");
+  if (!activeNode) { container.innerHTML = ""; return; }
+
+  if (activeNode === "applications") {
+    container.innerHTML = `<div class="panel">
+      <div class="panel-title">Applications</div>
+      ${APPLICATION_TASKS.map(t => taskRowHtml(t, !!state.tasks[t.id])).join("")}
+      <div class="divider-block">
+        <div class="section-label">Your college list</div>
+        <div id="college-list"></div>
+        <div class="add-row">
+          <input id="new-college-input" placeholder="Add a school…" />
+          <button class="add-btn" id="add-college-btn">+ Add</button>
+        </div>
+      </div>
+    </div>`;
+    renderColleges();
+    bindTaskRows();
+    document.getElementById("add-college-btn").addEventListener("click", addCollege);
+    document.getElementById("new-college-input").addEventListener("keydown", e => {
+      if (e.key === "Enter") addCollege();
+    });
+  } else if (activeNode === "scholarships") {
+    container.innerHTML = `<div class="panel">
+      <div class="panel-title">Scholarships</div>
+      ${SCHOLARSHIPS.map(s => {
+        const applied = !!state.scholarships[s.id];
+        return `<div class="sch-row">
+          <div>
+            <div class="sch-name">${s.name}</div>
+            <div class="sch-meta">${s.amount} · Due ${s.deadline} · ${s.tag}</div>
+          </div>
+          <button class="apply-btn ${applied ? "applied" : ""}" data-sch="${s.id}" ${applied ? "disabled" : ""}>
+            ${applied ? "✓ Applied" : "Mark applied"}
+          </button>
+        </div>`;
+      }).join("")}
+    </div>`;
+    container.querySelectorAll(".apply-btn").forEach(btn => {
+      btn.addEventListener("click", () => markScholarship(btn.dataset.sch));
+    });
+  } else if (activeNode === "tests") {
+    container.innerHTML = `<div class="panel">
+      <div class="panel-title">Tests & aid</div>
+      ${TEST_AID_TASKS.map(t => taskRowHtml(t, !!state.tasks[t.id])).join("")}
+    </div>`;
+    bindTaskRows();
+  } else if (activeNode === "wellness") {
+    const tip = ADVICE_TIPS[new Date().getDate() % ADVICE_TIPS.length];
+    container.innerHTML = `<div class="panel">
+      <div class="panel-title">Wellness</div>
+      <div class="tip-box"><b>Tip of the day: </b>${tip}</div>
+      ${WELLNESS_TASKS.map(t => taskRowHtml(t, !!state.tasks[t.id])).join("")}
+    </div>`;
+    bindTaskRows();
+  }
+}
+
+function bindTaskRows() {
+  document.querySelectorAll(".task-row").forEach(row => {
+    row.addEventListener("click", () => toggleTask(row.dataset.task));
+  });
+}
+
+function renderColleges() {
+  const list = document.getElementById("college-list");
+  list.innerHTML = state.colleges.map(c => {
+    const doneCount = CHECKLIST_ITEMS.filter(i => c.checklist[i.key]).length;
+    return `<div class="college-card">
+      <div class="college-head">
+        <div class="college-name">${c.name}</div>
+        <div class="college-actions">
+          <span class="college-count">${doneCount}/${CHECKLIST_ITEMS.length}</span>
+          <button class="remove-btn" data-remove="${c.id}" aria-label="Remove ${c.name}">✕</button>
+        </div>
+      </div>
+      <div class="chip-row">
+        ${CHECKLIST_ITEMS.map(item => {
+          const done = !!c.checklist[item.key];
+          return `<button class="chip ${done ? "done" : ""}" data-college="${c.id}" data-key="${item.key}">
+            ${done ? "✓ " : ""}${item.label}
+          </button>`;
+        }).join("")}
+      </div>
+    </div>`;
+  }).join("");
+
+  list.querySelectorAll(".chip").forEach(chip => {
+    chip.addEventListener("click", () => toggleChecklist(chip.dataset.college, chip.dataset.key));
+  });
+  list.querySelectorAll(".remove-btn").forEach(btn => {
+    btn.addEventListener("click", () => removeCollege(btn.dataset.remove));
+  });
+}
+
+function toggleTask(id) {
+  const isDone = !!state.tasks[id];
+  state.xp = Math.max(0, state.xp + (isDone ? -TASK_XP : TASK_XP));
+  state.tasks[id] = !isDone;
+  if (!isDone) recordActivity(state);
+  saveState();
+  render();
+}
+
+function markScholarship(id) {
+  if (state.scholarships[id]) return;
+  state.xp += SCHOLARSHIP_XP;
+  state.scholarships[id] = true;
+  recordActivity(state);
+  saveState();
+  render();
+}
+
+function toggleChecklist(collegeId, key) {
+  const college = state.colleges.find(c => c.id === collegeId);
+  if (!college) return;
+  const isDone = !!college.checklist[key];
+  state.xp = Math.max(0, state.xp + (isDone ? -CHECKLIST_XP : CHECKLIST_XP));
+  college.checklist[key] = !isDone;
+  if (!isDone) recordActivity(state);
+  saveState();
+  render();
+}
+
+function addCollege() {
+  const input = document.getElementById("new-college-input");
+  const name = input.value.trim();
+  if (!name) return;
+  state.colleges.push({
+    id: "c" + Date.now(),
+    name,
+    checklist: { transcript: false, essay: false, lor: false, scores: false, submitted: false },
+  });
+  input.value = "";
+  saveState();
+  render();
+}
+
+function removeCollege(id) {
+  state.colleges = state.colleges.filter(c => c.id !== id);
+  saveState();
+  render();
+}
+
+async function resetProgress() {
+  state = defaultState();
+  prevLevel = 1;
+  await saveState();
+  render();
+}
+
+document.getElementById("reset-btn").addEventListener("click", resetProgress);
+
+(async function init() {
+  await loadState();
+  document.getElementById("loading").classList.add("hidden");
+  document.getElementById("content").classList.remove("hidden");
+  render();
+})();
+</script>
+</body>
+</html>
